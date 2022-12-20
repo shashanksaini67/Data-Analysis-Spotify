@@ -1,0 +1,223 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+df_tracks=pd.read_csv('tracks.csv')
+df_tracks.head()
+
+# null values:
+pd.isna(df_tracks).sum()
+
+# info() functionn to check the number oof row and columns and the datatype of all of them:
+df_tracks.info()
+
+ #check : 10 least popular artist on spotify
+sorted_df=df_tracks.sort_values('popularity',ascending=True).head(10)
+sorted_df
+#here .sort_values('popularity',ascending=True) is a function which we use to choose column and in column we have to
+#give our column name
+
+df_tracks.describe().T
+
+most_popular=df_tracks.sort_values('popularity',ascending=False).query('popularity>90', inplace = False)
+#The .query() method is a Pandas function that can be used to filter a dataframe based on a query string. 
+#The query string is a string that contains a boolean expression that specifies the rows to include in the resulting dataframe.
+most_popular.head(10) #or you can use most_popular[:10],we use inplace bcs we dont want our real data to be changed by this
+
+'''It looks like you are trying to set the "release_date" column as the index of the df_tracks dataframe and convert
+the values in the index to datetime objects.
+To do this, you can use the set_index() method of the dataframe and pass it the name of the column you want to use as the index.
+You can also set the inplace parameter to True to modify the dataframe in place, without creating a new dataframe.
+Next, you can use the to_datetime() function from Pandas to convert the index to datetime objects. 
+This function takes a series or array of strings or numbers and converts them to datetime objects.'''
+import pandas as pd
+
+# Assume that df_tracks is a dataframe with a column called "release_date"
+
+# Set the "release_date" column as the index of the dataframe
+df_tracks.set_index("release_date", inplace=True)
+
+# Convert the index to datetime objects
+df_tracks.index = pd.to_datetime(df_tracks.index)
+
+# View the first few rows of the dataframe
+df_tracks.head()
+
+
+#if i want to check about an artist in the dataset or lets take i want to check 18th artist in dataset so how? : index
+#how?__ we will use [[]] with out df and then we will use 'index location function' *iloc* then in iloc we will give the row num
+df_tracks[['artists']].iloc[18]
+
+#now in our data we have duration in "miliseconds" and we will change it into "seconds"
+'''ways:
+---apply() is a function in the pandas library that can be used to apply a function to each element of a pandas DataFrame
+or Series object.The function can be specified as a Python function or as a lambda function.
+new=dataframe.apply(lambda x: x + 1)
+---round() is a function in the pandas library that can be used to round the values 
+in a pandas DataFrame or Series object to a specific number of decimal places.'''
+df_tracks['duration']=df_tracks['duration_ms'].apply(lambda x:round(x/1000))
+df_tracks.drop('duration_ms',inplace=True, axis=1)
+
+
+df_tracks.duration.head(10)
+
+#we are going to do first visualisation excercise
+'''
+---use drop() and corr() together to drop a column from a data frame and then compute the correlation
+between the remaining columns:
+---corr() is a function in the pandas library that can be used to compute the correlation between columns of a pandas DataFrame.
+The method parameter specifies the method to use for computing the correlation.
+
+The pearson method computes the Pearson correlation coefficient between the columns. The Pearson correlation coefficient is
+a measure of the linear relationship between two variables, ranging from -1 (perfect negative correlation) to
+1 (perfect positive correlation). A value of 0 indicates no correlation.******
+'''
+corr_df=df_tracks.drop(['key','mode','explicit'],axis=1).corr(method='pearson')
+
+'''
+---plt.figure() is a function in the matplotlib library that can be used to create a new figure in a matplotlib plot.
+A figure is a container that holds one or more plots (also known as subplots), and it is used to customize the
+appearance and layout of the plots.
+'''
+plt.figure(figsize=(14,6))
+
+'''
+---sns.heatmap is a function in the seaborn library that can be used to create a heatmap, which is a graphical
+representation of data where the values are represented as colors. Heatmaps are often used to visualize patterns in
+data and to identify correlations between variables.
+using annot=true this will write the data value in each set of the heatmap
+
+---In the seaborn library, the vmax and vmin parameters of the heatmap() function can be used to specify the 
+range of values to include in the color map of the heatmap.
+The vmax parameter specifies the maximum value to include in the color map, and the vmin parameter specifies 
+the minimum value to include. By default, vmax is set to 
+the maximum value in the data, and vmin is set to the minimum value.
+'''
+heatmap=sns.heatmap(corr_df,annot=True,vmin=-1,vmax=1,fmt=".1g")
+
+'''
+In the seaborn library, the heatmap() function returns an AxesSubplot object that can be used to customize
+the appearance and layout of the heatmap. The set_xticklabels() and get_xticklabels() methods of the AxesSubplot 
+object can be used to set and get the labels for the x-axis tick marks of the heatmap.
+'''
+heatmap.set_title('Corelation heatmap between variable')
+heatmap.set_xticklabels(heatmap.get_xticklabels(),rotation=90)
+
+'''
+now we will create a sample data of 4% of our total data and create two replacement plot using this sample data. 
+'''
+sample_df=df_tracks.sample(int(0.004*len(df_tracks)))
+
+print(len(sample_df))
+
+#now plot regression plot between two aspects(loudness,energy)
+plt.figure(figsize=(10,6)) #here 10 is the width of chart and 6 is the height of the chart
+sns.regplot(data=sample_df,y='loudness',x='energy').set(title='loudness vs energy correlation')
+
+'''
+remarks:
+for chart
+first do matplotlib.pyplt as plt
+then  go for the 
+pllot size: plt.figure(figsize=(10,6))
+after this go fot the type of graph ypu want to build:
+sns.regplot(data='your data file name',x='name in x axis',y='name in y axis').set(title='title name of the graph')
+
+'''
+
+#now plot regression plot between two aspects(popularity,acousticness)
+plt.figure(figsize=(10,6)) #here 10 is the width of chart and 6 is the height of the chart
+sns.regplot(data=sample_df,y='popularity',x='acousticness',color='b').set(title='acousticness vs popularity correlation')
+###here the regression line is shoewing the downword trend so it means they opposit to eachother popularity increase then 
+#acousticness decreases always.
+
+'''
+The line of code you provided uses the .index attribute of the dataframe to get the multi-index for the rows, 
+and then uses the 
+get_level_values() method::: to extract the values for the "release_date" level of the index. 
+These values are then assigned to the "dates" column of the dataframe.
+'''
+df_tracks['dates']=df_tracks.index.get_level_values('release_date')
+
+'''
+This will also create a new column called "years" that contains the year for each row in the "dates" column.
+'''
+
+years= df_tracks['dates'].dt.year
+
+
+years
+
+# create a distribution plot to visualize the total number of songs composed since 1992 till final year using  seaborn library:
+sns.displot(years,discrete=True,kind='hist',aspect=2,height=5,color='g').set(title="Number of songs per year")
+
+#we are going to create a bar plot for the duration of the songs during the period of the years for that we will create a bar plot.
+total_dr=df_tracks.duration
+fig,ax=plt.subplots(figsize=(18,7))
+fig=sns.barplot(x=years,y=total_dr,ax=ax,errwidth=False).set(title='years vs total duration')
+plt.xticks(rotation=90)
+
+#now we will create a line plot to check the average duration of th esongs over the year
+'''
+It looks like you are trying to create a line plot that compares the total duration of tracks to the year in which they were
+released.
+
+To do this, you can use the lineplot() function from the seaborn library. The lineplot() function takes two main 
+arguments: x, which specifies the data for the x-axis, and y, which specifies the data for the y-axis.
+
+In your code, the x argument is years and the y argument is total_dr. years should be a series or array containing 
+the years for each track, and total_dr should be a series or array containing the duration of each track.
+
+The set_style() function from seaborn is used to set the style of the plot, and the figure() and subplots() functions 
+from matplotlib are used to create the figure and the axis object for the plot. The title() method of the axis object is 
+used to set the title of the plot.
+
+Finally, the xticks() function from matplotlib is used to rotate the x-tick labels by 60 degrees to make them easier to read.
+
+Here is an example of how this code could be used to create a line plot:
+
+
+'''
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Assume that df_tracks is a dataframe with a column called "duration" and a column called "year"
+
+# Extract the data for the x-axis and the y-axis
+
+total_dr = df_tracks['duration']
+
+# Set the style of the plot
+sns.set_style(style="whitegrid")
+
+# Create the figure and the axis object for the plot
+fig_dims =(10, 5)
+fig, ax = plt.subplots (figsize=fig_dims)
+
+# Create the line plot
+fig = sns.lineplot (x=years, y=total_dr, ax=ax)
+
+# Set the title of the plot
+fig.set(title="Year vs duration")
+
+# Rotate the x-tick labels
+plt.xticks(rotation=60)
+
+
+total_dr=df_tracks.duration
+sns.set_style(style="whitegrid")
+fig_dims =(10, 5)
+fig, ax = plt.subplots (figsize=fig_dims)
+fig=sns.lineplot (x=years, y=total_dr,ax=ax) .set(title="Year vs duration")
+plt.xticks(rotation=60)
+
+pip install --user seaborn==0.11.0
+
+#second dataset : gener
+
+df_gener=pd.read_csv('SpotifyFeatures.csv')
+
+df_gener.head(5)
+
